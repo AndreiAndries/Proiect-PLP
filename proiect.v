@@ -404,38 +404,72 @@ Fixpoint beval_fun (b : BExp) (env : Env) : tip_de_date :=
 
 Definition Vector := list nat.
 
-Definition Length (v : Vector) : nat := List.length v.
+Inductive Vectfun :=
+| vlength : Vector -> Vectfun
+| vpushfr : Vector -> nat -> Vectfun
+| vpushfrvar : Vector -> Var -> Vectfun
+| vpush : Vector -> nat -> Vectfun
+| vpushvar : Vector -> Var -> Vectfun
+| vpop : Vector -> Vectfun
+| vindex : Vector -> nat -> Vectfun
+| vreverse : Vector -> Vectfun.
 
-Definition Pushfront (v : Vector) (n : nat): Vector := n :: v.  
+Definition _Length_ (v : Vector) : nat := List.length v.
 
-Definition Pop (v : Vector) : Vector := List.removelast v.
+Definition _Pushfront_ (v : Vector) (n : nat): Vector := n :: v.  
 
-Definition index (v : Vector) (n : nat) : nat := List.nth n v 0.
+Definition _Pop_ (v : Vector) : Vector := List.removelast v.
 
-Notation "VLength( A )" := (Length A) (at level 50). 
-Notation "Pushfront( V , X )" := (Pushfront V X) (at level 50).
-Notation "Pop( V )" := (Pop V) (at level 50).
-Notation " V [' I ]'" := (index V I) (at level 40).
+Definition _index_ (v : Vector) (n : nat) : nat := List.nth n v 0.
 
-Compute VLength( [10;20;30] ).
-Definition L1 := Pushfront( [10;20;30] , 40 ).
+Definition _reverse_ (v : Vector) : Vector := List.rev v.
+
+Definition _push_ (v : Vector) (n : nat) : Vector := List.rev ( n :: List.rev v).
+
+Notation "VLength( A )" := (vlength A) (at level 50). 
+Notation "Pushfront( V , X )" := (vpushfr V X) (at level 50).
+Notation "Pop( V )" := (vpop V) (at level 50).
+Notation " V [' I ']" := (vindex V I) (at level 40).
+Notation "Push( V , A )" := (vpush V A) (at level 50).
+Notation "Reverse( V )" := (vreverse V) (at level 50).
+Notation "PushVar( V , A )" := (vpushvar V A) (at level 50).
+Notation "PushfrontVar( V , X )" := (vpushfrvar V X) (at level 50).
+
+Notation "VLength1( A )" := (_Length_ A) (at level 50). 
+Notation "Pushfront1( V , X )" := (_Pushfront_ V X) (at level 50).
+Notation "Pop1( V )" := (_Pop_ V) (at level 50).
+Notation " V [' I ]'" := (_index_ V I) (at level 40).
+Notation "Push1( V , A )" := (_push_ V A) (at level 50).
+Notation "Reverse1( V )" := (_reverse_ V) (at level 50).
+
+Compute VLength1( [10;20;30] ).
+Definition L1 := Pushfront1( [10;20;30] , 40 ).
 Compute L1.
 Compute L1['2]'.
 Compute (List.last L1).
-Definition L2 := Pop( L1 ).
-Definition L0 := Pop (Pop( Pop( Pop( L1) ) ) ).
+Definition L2 := Pop1( L1 ).
+Definition L0 := Pop1( Pop1( Pop1( Pop1( L1) ) ) ).
 Compute L2.
 Compute L0.
+Compute L2.
+Compute Push1(Push1(L2,5),11).
+Compute Reverse1(L2).
 
 Inductive Stmt :=
 | declNat : tip_de_date -> Stmt
 | declBool : tip_de_date -> Stmt
 | declStr : tip_de_date -> Stmt
 | declVect : Vector -> Stmt
-| varib : Var -> Stmt
+| returnNat : tip_de_date -> Stmt
+| returnBool : tip_de_date -> Stmt
+| returnStr : tip_de_date -> Stmt
+| returnVect : Vector -> Stmt
+| scan : tip_de_date -> Stmt
+| print : tip_de_date -> Stmt
+| varib : tip_de_date -> Stmt
 | declObiect : Var -> Var -> Stmt
 | obfunc: Var -> Var -> Stmt
-| vctlng: Vector -> Stmt
+| vfun : Vectfun -> Stmt
 | obfuncpar: Var -> Var -> Stmt -> Stmt
 | obtip : Var -> Var -> Stmt
 | assignment : Var -> AExp -> Stmt
@@ -449,13 +483,28 @@ Inductive Stmt :=
 | Struct : Var -> Stmt -> Var -> Stmt
 | CLASS : Var -> Stmt -> Stmt -> Stmt
 | function : Var -> Stmt -> Stmt -> Stmt
-| function_antet : Var -> Stmt -> Stmt.
+| function1 : Var -> Stmt -> Stmt
+| constructor : Var -> Stmt -> Stmt
+| constructor1 : Var -> Stmt
+| destructor : Var -> Stmt
+| function_antet : Var -> Stmt -> Stmt
+| simple_lambda : Var -> Stmt -> Stmt -> Stmt
+| passbyvalue_lambda : Var -> Stmt -> Stmt -> Stmt
+| passvars_lambda : Var -> Stmt -> Stmt -> Stmt -> Stmt.
 
-
+Coercion vfun : Vectfun >-> Stmt.
+Coercion varib : tip_de_date >-> Stmt.
 Notation "-Nat A" := (declNat A) (at level 40).
 Notation "-Bool A" := (declBool A) (at level 40).
 Notation "-String A" := (declStr A) (at level 40).
 Notation "-Vector A" := (declVect A) (at level 40).
+Notation "-RetNat A" := (returnNat A) (at level 40).
+Notation "-RetBool A" := (returnBool A) (at level 40).
+Notation "scan( A )" := (scan A) (at level 40).
+Notation "print( A )" := (print A) (at level 40).
+Notation "CLASS( N ) X" := (declObiect N X) (at level 40).
+Notation "-RetString A" := (returnStr A) (at level 40).
+Notation "-RetVector A" := (returnVect A) (at level 40).
 Notation "X ::= A" := (assignment X A) (at level 50).
 Notation "X ::=' A" := (assignment1 X A) (at level 50).
 Notation "cpy( X , A )" := (sassignment X A) (at level 50).
@@ -464,14 +513,20 @@ Notation "if( B ){ S }" := (ifthen B S) (at level 45).
 Notation "if( B ){ S1 }ELSE{ S2 }" := (ifthenelse B S1 S2) (at level 45).
 Notation "While( B ){ S }" := (while B S) (at level 45).
 Notation "for*( S1 ; B ; S2 ){ S3 }" := (For S1 B S2 S3) (at level 45).
-Notation "vect_length( N )" := (vctlng N) (at level 49). 
 Notation "struct( NAME ){ S } VAR " := (Struct NAME S VAR) (at level 40).
 Notation "CLASS( NAME ){ PRIVATE: S1 PUBLIC: S2 } " := (CLASS NAME S1 S2) (at level 40).
-Notation " V ( S1 ) " := (function_antet V S1) ( at level 50).
-Notation " function N ( S1 ){ S2 } ":= (function N S1 S2) (at level 44).
+Notation " ( V )( S1 ) " := (function_antet V S1) ( at level 50).
+Notation " function( N )( S1 ){ S2 } ":= (function N S1 S2) (at level 44).
+Notation " function'( N )(){ S } ":= (function1 N S) (at level 44).
+Notation " ctor( N )( S1 ){ S2 } ":= (constructor N S1 S2) (at level 44).
+Notation " ctor'( N ){ S } ":= (constructor1 N S) (at level 44).
+Notation " ~dtor( N ) ":=(destructor N) (at level 44).
 Notation " X ->' Y ":= (obtip X Y) (at level 40).
-Notation " X ->' Y ()":= (obfunc X Y) (at level 50).
-Notation " X ->' Y ( Z )":=(obfuncpar X Y Z) (at level 50). 
+Notation " X '-> Y ()":= (obfunc X Y) (at level 50).
+Notation " X '->> Y (' Z ')":=(obfuncpar X Y Z) (at level 50). 
+Notation " lambda( N )[_]( S1 ){ S2 } ":= (simple_lambda N S1 S2) (at level 44).
+Notation " lambda( N )[=]( S1 ){ S2 } ":= (passbyvalue_lambda N S1 S2) (at level 44).
+Notation " lambda( N )[ S1 ]( S2 ){ S3 } ":= (passvars_lambda N S1 S2 S3) (at level 44).
 
 Check -Nat "x".
 Check -Bool "ok".
@@ -493,9 +548,12 @@ Compute if( "a" <=' 10 ){
   "a"::= "a" /' 2 ;; 
   -Vector L0  
 }.
-Compute While( "a" !=' 10 \/' "a"!=' 100){
+Compute 
+-Vector L1 ;;
+While( "a" !=' 10 \/' "a"!=' 100){
   if( "a" >=' 50 ){
     if( "a" <' 100){
+      PushVar( L1 , "a") ;;
       "a"::="a" +' 1
     }ELSE{
       "a"::="a" -' 1
@@ -538,8 +596,87 @@ for*("i" ::= 0 ; "i" <=' 10 ; "i"::= "i" +' 1){
   }
 }.
 
+Compute
+function("newfunc")(-Nat "default"){
+      if( "a" <' 100){
+      PushVar( L1 , "a") ;;
+        "a"::="a" +' 1
+      }ELSE{
+        "a"::="a" -' 1
+      }
+}.
 
-
+Compute
+CLASS("NEW_CLASS"){
+  PRIVATE:
+    -Nat "x";;
+    -Vector L0;;
+    -Bool "ok" 
+  PUBLIC:
+    function("newfunc")(-Nat "default"){
+      if( "a" <' 100){
+      PushVar( L1 , "a") ;;
+        "a"::="a" +' 1
+      }ELSE{
+        "a"::="a" -' 1 ;;
+        ("newfunc")("default"::="default" -' 1)
+      }
+    } ;;
+    function'("func")(){
+      While( "a" !=' 10 \/' "a"!=' 100){
+        if( "a" >=' 50 ){
+          if( "a" <' 100){
+            PushVar( L1 , "a") ;;
+            "a"::="a" +' 1
+          }ELSE{
+            "a"::="a" -' 1
+          }
+        }ELSE{
+          if("a" >' 10){
+            "a"::="a" -' 1
+          }ELSE{
+            "a"::="a" +' 1 ;; 
+            -RetNat "a"
+          }
+        }
+      }
+    };;
+    ~dtor("NEW_CLASS")
+};;
+CLASS("NEW_CLASS")"Obiect";;
+"Obiect"'->"func"();;
+"Obiect"'->>"newfunc"('-Nat "x"');;
+-Nat "ceva";; -Nat "newvr" ;; -Nat "newvr2" ;;
+scan("ceva") ;; scan("newvr") ;; scan("newvr2") ;;
+lambda("lambdasimpla")[_](-Nat "a"){
+  -Nat "i";;
+  for*("i" ::= 0 ; "i" <=' 10 ; "i"::= "i" +' 1){
+    -Nat "j";;
+    "j"::= "i" +' "a" ;;
+    print( "j" );;
+    print("\n")
+  }
+};;
+lambda("lambda_pass_value")[=](-Nat "a"){
+  -Nat "i";;
+  for*("i" ::= 0 ; "i" <=' 10 ; "i"::= "i" +' 1){
+    -Nat "j";;
+    "j"::= "i" +' "a" ;;
+    "j"::= "j" *' "ceva" ;; "j"::= "j" -' "newvr" ;; "j" ::= "j" /' "newvr2"  ;;
+    print( "j" );;
+    print("\n")
+  }
+};;
+lambda("lambda_pass_vars")["ceva" ;; "newvr"](-Nat "a"){
+  for*("i" ::= 0 ; "i" <=' 10 ; "i"::= "i" +' 1){
+    -Nat "j";;
+    "j"::= "i" +' "a" ;;
+    "j"::= "j" *' "ceva" ;; "j"::= "j" -' "newvr";;
+    print( "j" );;
+    print("\n")
+  }
+}
+.
 
 
 
